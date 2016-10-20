@@ -10,8 +10,8 @@ import UIKit
 import XMPPFramework
 
 protocol ChatDelegate {
-	func buddyWentOnline(name: String)
-	func buddyWentOffline(name: String)
+	func buddyWentOnline(_ name: String)
+	func buddyWentOffline(_ name: String)
 	func didDisconnect()
 }
 
@@ -28,80 +28,81 @@ class AppDelegate: UIResponder, UIApplicationDelegate, XMPPRosterDelegate, XMPPS
 		xmppRoster = XMPPRoster(rosterStorage: xmppRosterStorage)
 	}
 	
-	func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
 		// Override point for customization after application launch.
 		
-		DDLog.addLogger(DDTTYLogger.sharedInstance())
+		DDLog.add(DDTTYLogger.sharedInstance())
 		
 		setupStream()
 		
 		return true
 	}
 	
-	func applicationWillResignActive(application: UIApplication) {
+	func applicationWillResignActive(_ application: UIApplication) {
 		// Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
 		// Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
 		disconnect()
 	}
 	
-	func applicationDidEnterBackground(application: UIApplication) {
+	func applicationDidEnterBackground(_ application: UIApplication) {
 		// Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
 		// If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 	}
 	
-	func applicationWillEnterForeground(application: UIApplication) {
+	func applicationWillEnterForeground(_ application: UIApplication) {
 		// Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 	}
 	
-	func applicationDidBecomeActive(application: UIApplication) {
+	func applicationDidBecomeActive(_ application: UIApplication) {
 		// Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
 		connect()
 	}
 	
-	func applicationWillTerminate(application: UIApplication) {
+	func applicationWillTerminate(_ application: UIApplication) {
 		// Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 	}
 	
 	//MARK: Private Methods
-	private func setupStream() {
+	fileprivate func setupStream() {
 		//xmppRoster = XMPPRoster(rosterStorage: xmppRosterStorage)
 		xmppRoster.activate(xmppStream)
-		xmppStream.addDelegate(self, delegateQueue: dispatch_get_main_queue())
-		xmppRoster.addDelegate(self, delegateQueue: dispatch_get_main_queue())
+		xmppStream?.addDelegate(self, delegateQueue: DispatchQueue.main)
+		xmppRoster.addDelegate(self, delegateQueue: DispatchQueue.main)
 	}
 	
-	private func goOnline() {
+	fileprivate func goOnline() {
 		let presence = XMPPPresence()
-		let domain = xmppStream.myJID.domain
+		let domain = xmppStream?.myJID.domain
 		
 		if domain == "gmail.com" || domain == "gtalk.com" || domain == "talk.google.com" {
-			let priority = DDXMLElement.elementWithName("priority", stringValue: "24") as! DDXMLElement
-			presence.addChild(priority)
+			let priority = DDXMLElement.element(withName: "priority", stringValue: "24") as! DDXMLElement
+			presence?.addChild(priority)
 		}
-		xmppStream.sendElement(presence)
+        
+		xmppStream?.send(presence)
 	}
 	
-	private func goOffline() {
+	fileprivate func goOffline() {
 		let presence = XMPPPresence(type: "unavailable")
-		xmppStream.sendElement(presence)
+		xmppStream?.send(presence)
 	}
 	
 	func connect() -> Bool {
-		if !xmppStream.isConnected() {
-			let jabberID = NSUserDefaults.standardUserDefaults().stringForKey("userID")
-			let myPassword = NSUserDefaults.standardUserDefaults().stringForKey("userPassword")
+		if !(xmppStream?.isConnected())! {
+			let jabberID = UserDefaults.standard.string(forKey: "userID")
+			let myPassword = UserDefaults.standard.string(forKey: "userPassword")
 			
-			if !xmppStream.isDisconnected() {
+			if !(xmppStream?.isDisconnected())! {
 				return true
 			}
 			if jabberID == nil && myPassword == nil {
 				return false
 			}
 			
-			xmppStream.myJID = XMPPJID.jidWithString(jabberID)
+			xmppStream?.myJID = XMPPJID.init(string: jabberID)
 			
 			do {
-				try xmppStream.connectWithTimeout(XMPPStreamTimeoutNone)
+				try xmppStream?.connect(withTimeout: XMPPStreamTimeoutNone)
 				print("Connection success")
 				return true
 			} catch {
@@ -115,36 +116,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate, XMPPRosterDelegate, XMPPS
 	
 	func disconnect() {
 		goOffline()
-		xmppStream.disconnect()
+		xmppStream?.disconnect()
 	}
 	
 	//MARK: XMPP Delegates
-	func xmppStreamDidConnect(sender: XMPPStream!) {
+	func xmppStreamDidConnect(_ sender: XMPPStream!) {
 		do {
-			try	xmppStream.authenticateWithPassword(NSUserDefaults.standardUserDefaults().stringForKey("userPassword"))
+			try	xmppStream?.authenticate(withPassword: UserDefaults.standard.string(forKey: "userPassword"))
 		} catch {
 			print("Could not authenticate")
 		}
 	}
 	
-	func xmppStreamDidAuthenticate(sender: XMPPStream!) {
+	func xmppStreamDidAuthenticate(_ sender: XMPPStream!) {
 		goOnline()
 	}
 	
-	func xmppStream(sender: XMPPStream!, didReceiveIQ iq: XMPPIQ!) -> Bool {
+	func xmppStream(_ sender: XMPPStream!, didReceive iq: XMPPIQ!) -> Bool {
 		print("Did receive IQ")
 		return false
 	}
 	
-	func xmppStream(sender: XMPPStream!, didReceiveMessage message: XMPPMessage!) {
+	func xmppStream(_ sender: XMPPStream!, didReceive message: XMPPMessage!) {
 		print("Did receive message \(message)")
 	}
 	
-	func xmppStream(sender: XMPPStream!, didSendMessage message: XMPPMessage!) {
+	func xmppStream(_ sender: XMPPStream!, didSend message: XMPPMessage!) {
 		print("Did send message \(message)")
 	}
 	
-	func xmppStream(sender: XMPPStream!, didReceivePresence presence: XMPPPresence!) {
+	func xmppStream(_ sender: XMPPStream!, didReceive presence: XMPPPresence!) {
 		let presenceType = presence.type()
 		let myUsername = sender.myJID.user
 		let presenceFromUser = presence.from().user
@@ -159,7 +160,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, XMPPRosterDelegate, XMPPS
 		}
 	}
 	
-	func xmppRoster(sender: XMPPRoster!, didReceiveRosterItem item: DDXMLElement!) {
+	func xmppRoster(_ sender: XMPPRoster!, didReceiveRosterItem item: DDXMLElement!) {
 		print("Did receive Roster item")
 	}
 }

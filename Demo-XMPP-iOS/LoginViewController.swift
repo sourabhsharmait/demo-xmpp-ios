@@ -17,8 +17,8 @@ class LoginViewController: UIViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
-		loginTextField.text = "yourLogin@gmail.com"
-		passwordTextField.text = "yourPassword"
+		loginTextField.text = "XMPPaccount@domainname"
+		passwordTextField.text = "XMPPpassword"
 	}
 	
 	override func didReceiveMemoryWarning() {
@@ -26,18 +26,18 @@ class LoginViewController: UIViewController {
 		// Dispose of any resources that can be recreated.
 	}
 	
-	@IBAction func login(sender: AnyObject) {
-		NSUserDefaults.standardUserDefaults().setObject(loginTextField.text!, forKey: "userID")
-		NSUserDefaults.standardUserDefaults().setObject(passwordTextField.text!, forKey: "userPassword")
+	@IBAction func login(_ sender: AnyObject) {
+		UserDefaults.standard.set(loginTextField.text!, forKey: "userID")
+		UserDefaults.standard.set(passwordTextField.text!, forKey: "userPassword")
 		
-		let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+		let appDelegate = UIApplication.shared.delegate as! AppDelegate
 		
 		if appDelegate.connect() {
-			dismissViewControllerAnimated(true, completion: nil)
+			dismiss(animated: true, completion: nil)
 		}
 	}
 	
-	@IBAction func done(sender: AnyObject) {
-		dismissViewControllerAnimated(true, completion: nil)
+	@IBAction func done(_ sender: AnyObject) {
+		dismiss(animated: true, completion: nil)
 	}
 }

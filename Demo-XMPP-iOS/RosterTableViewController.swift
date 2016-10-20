@@ -1,3 +1,6 @@
+
+
+
 //
 //  ViewController.swift
 //  testSWIFTXMPPF
@@ -10,9 +13,9 @@ import UIKit
 import XMPPFramework
 
 class RosterTableViewController: UITableViewController, ChatDelegate {
-	
+
 	var onlineBuddies = NSMutableArray()
-	let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+	let appDelegate = UIApplication.shared.delegate as! AppDelegate
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -20,62 +23,62 @@ class RosterTableViewController: UITableViewController, ChatDelegate {
 		appDelegate.delegate = self
 	}
 
-	override func viewDidAppear(animated: Bool) {
-		if (NSUserDefaults.standardUserDefaults().objectForKey("userID") != nil) {
+	override func viewDidAppear(_ animated: Bool) {
+		if (UserDefaults.standard.object(forKey: "userID") != nil) {
 			if appDelegate.connect() {
-				self.title = appDelegate.xmppStream.myJID.bare()
-				appDelegate.xmppRoster.fetchRoster()
+				self.title = appDelegate.xmppStream?.myJID.bare()
+				appDelegate.xmppRoster.fetch()
 			}
 		} else {
-			performSegueWithIdentifier("Home.To.Login", sender: self)
+			performSegue(withIdentifier: "Home.To.Login", sender: self)
 		}
 	}
 	
 	//MARK: TableView Delegates
-	override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-		let cell = tableView.dequeueReusableCellWithIdentifier("CellIdentifier", forIndexPath: indexPath)
+	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+		let cell = tableView.dequeueReusableCell(withIdentifier: "CellIdentifier", for: indexPath as IndexPath)
 		
 		cell.textLabel?.text = onlineBuddies[indexPath.row] as? String
 		
 		return cell
 	}
 	
-	override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+	override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 		return onlineBuddies.count
 	}
 	
-	override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+	override func numberOfSections(in tableView: UITableView) -> Int {
 		return 1
 	}
 	
-	override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 		
-		let alertController = UIAlertController(title: "Warning!", message: "It will send Yo! to the recipient, continue ?", preferredStyle: UIAlertControllerStyle.Alert)
-		alertController.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.Cancel, handler: { (action) -> Void in
-			alertController.dismissViewControllerAnimated(true, completion: nil)
+		let alertController = UIAlertController(title: "Warning!", message: "It will send Yo! to the recipient, continue ?", preferredStyle: UIAlertControllerStyle.alert)
+		alertController.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.cancel, handler: { (action) -> Void in
+			alertController.dismiss(animated: true, completion: nil)
 		}))
 		
-		alertController.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: { (action) -> Void in
+		alertController.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: { (action) -> Void in
 			let message = "Yo!"
-			let senderJID = XMPPJID.jidWithString(self.onlineBuddies[indexPath.row] as? String)
+			let senderJID = XMPPJID.init(string: self.onlineBuddies[indexPath.row] as? String)
 			let msg = XMPPMessage(type: "chat", to: senderJID)
 			
-			msg.addBody(message)
-			self.appDelegate.xmppStream.sendElement(msg)
+			msg?.addBody(message)
+			self.appDelegate.xmppStream?.send(msg)
 		}))
-		presentViewController(alertController, animated: true, completion: nil)
+		present(alertController, animated: true, completion: nil)
 	}
 	
 	//MARK: Chat delegates
-	func buddyWentOnline(name: String) {
-		if !onlineBuddies.containsObject(name) {
-			onlineBuddies.addObject(name)
+	func buddyWentOnline(_ name: String) {
+		if !onlineBuddies.contains(name) {
+			onlineBuddies.add(name)
 			tableView.reloadData()
 		}
 	}
 	
-	func buddyWentOffline(name: String) {
-		onlineBuddies.removeObject(name)
+	func buddyWentOffline(_ name: String) {
+		onlineBuddies.remove(name)
 		tableView.reloadData()
 	}
 	
